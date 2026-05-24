@@ -1,105 +1,77 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react'
+import { NavigationContainer } from '@react-navigation/native'
+import { createStackNavigator } from '@react-navigation/stack'
+import { StatusBar } from 'expo-status-bar'
+import { View, ActivityIndicator } from 'react-native'
+import { supabase } from './lib/supabase'
 
-const API_URL = 'http://10.0.0.132:3000'
+import WelcomeScreen from './screens/WelcomeScreen'
+import LoginScreen from './screens/LoginScreen'
+import SignupScreen from './screens/SignupScreen'
+import ForgotPasswordScreen from './screens/ForgotPasswordScreen'
+import HomeScreen from './screens/HomeScreen'
+import RideScreen from './screens/RideScreen'
+import DriverScreen from './screens/DriverScreen'
+import ProfileScreen from './screens/ProfileScreen'
+import RideHistoryScreen from './screens/RideHistoryScreen'
+import ChargingStationsScreen from './screens/ChargingStationsScreen'
 
-export default function App() {
-  const [rides, setRides] = useState([])
-  const [loading, setLoading] = useState(true)
+const Stack = createStackNavigator()
 
-  useEffect(() => {
-    fetch(`${API_URL}/rides/available`)
-      .then(res => res.json())
-      .then(data => {
-        setRides(data)
-        setLoading(false)
-      })
-      .catch(err => {
-        console.log('Error:', err)
-        setLoading(false)
-      })
-  }, [])
-
+function AuthStack() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>⚡ Volt</Text>
-      <Text style={styles.subheader}>Available Rides</Text>
-      {loading ? (
-        <ActivityIndicator size="large" color="#00ff88" />
-      ) : rides.length === 0 ? (
-        <Text style={styles.empty}>No rides available</Text>
-      ) : (
-        <FlatList
-          data={rides}
-          keyExtractor={item => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Text style={styles.pickup}>📍 {item.pickup}</Text>
-              <Text style={styles.dropoff}>🏁 {item.dropoff}</Text>
-              <Text style={styles.price}>${item.base_price * item.surge_multiplier}</Text>
-              <Text style={styles.status}>{item.status}</Text>
-            </View>
-          )}
-        />
-      )}
-      <StatusBar style="auto" />
-    </View>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+    </Stack.Navigator>
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-  },
-  header: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#00ff88',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subheader: {
-    fontSize: 18,
-    color: '#ffffff',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#00ff88',
-  },
-  pickup: {
-    color: '#ffffff',
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  dropoff: {
-    color: '#aaaaaa',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  price: {
-    color: '#00ff88',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  status: {
-    color: '#666666',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  empty: {
-    color: '#666666',
-    textAlign: 'center',
-    fontSize: 16,
-  },
-})
+function AppStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="Ride" component={RideScreen} />
+      <Stack.Screen name="Driver" component={DriverScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="RideHistory" component={RideHistoryScreen} />
+      <Stack.Screen name="ChargingStations" component={ChargingStationsScreen} />
+    </Stack.Navigator>
+  )
+}
+
+export default function App() {
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FDFAF3' }}>
+        <ActivityIndicator size="large" color="#E8C468" />
+      </View>
+    )
+  }
+
+  return (
+    <NavigationContainer>
+      <StatusBar style="dark" />
+      {session ? <AppStack /> : <AuthStack />}
+    </NavigationContainer>
+  )
+}
 
