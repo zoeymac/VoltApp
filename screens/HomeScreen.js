@@ -7,6 +7,7 @@ import {
 import MapView, { Marker } from 'react-native-maps'
 import { Ionicons } from '@expo/vector-icons'
 import * as Location from 'expo-location'
+import { supabase } from '../lib/supabase'
 
 const { height, width } = Dimensions.get('window')
 
@@ -178,6 +179,7 @@ export default function HomeScreen({ navigation }) {
     setStep('searching')
     setSearchSeconds(0)
     try {
+      const { data: { user } } = await supabase.auth.getUser()
       const res = await fetch(`${API_URL}/rides`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -188,7 +190,7 @@ export default function HomeScreen({ navigation }) {
           base_price: getPrice(),
           surge_multiplier: 1.0,
           status: 'searching',
-          rider_id: 'a727848a-d648-490e-9a57-d7484e22c2b8',
+          rider_id: user?.id || 'a727848a-d648-490e-9a57-d7484e22c2b8',
         })
       })
       const data = await res.json()
