@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "config": {
-        "googleMapsApiKey": "AIzaSyBRb6g0xluw6GMToquEiPgESIlNPLWWxRk"
+        "googleMapsApiKey": "MAPS_KEY_REMOVED"
       }
     },
     "android": {
@@ -25,16 +25,14 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "YAIzaSyBRb6g0xluw6GMToquEiPgESIlNPLWWxRk"
+          "apiKey": "MAPS_KEY_REMOVED"
         }
       },
       "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-secure-store"
-    ]
+    }
   }
 }
+
