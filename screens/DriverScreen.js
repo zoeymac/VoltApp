@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Switch } from 'react-native'
 
-const API_URL = 'http://10.0.0.132:3000'
+const API_URL = 'http://10.0.0.100:3000'
 
 export default function DriverScreen() {
   const [rides, setRides] = useState([])

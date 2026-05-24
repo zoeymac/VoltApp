@@ -20,7 +20,7 @@ const BORDER = '#E8E8E8'
 const GREEN = '#22c55e'
 const RED = '#ef4444'
 
-const API_URL = 'http://10.0.0.132:3000'
+const API_URL = 'http://10.0.0.100:3000'
 
 const mockDrivers = [
   { name: 'Alex Chen', rating: 4.9, model: 'Tesla Model 3', plate: 'EV-2024', eta: 4 },

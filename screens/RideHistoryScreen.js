@@ -13,7 +13,7 @@ const DARK = '#1A1A1A'
 const BORDER = '#E8E8E8'
 const GREEN = '#22c55e'
 
-const API_URL = 'http://10.0.0.132:3000'
+const API_URL = 'http://10.0.0.100:3000'
 
 export default function RideHistoryScreen({ navigation }) {
   const [rides, setRides] = useState([])
