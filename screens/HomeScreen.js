@@ -84,14 +84,11 @@ export default function HomeScreen({ navigation }) {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync()
       if (status !== 'granted') return
-
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced
       })
-
       const { latitude, longitude } = location.coords
       setUserLocation({ latitude, longitude })
-
       const geocode = await Location.reverseGeocodeAsync({ latitude, longitude })
       if (geocode.length > 0) {
         const addr = geocode[0]
@@ -112,11 +109,9 @@ export default function HomeScreen({ navigation }) {
           Animated.timing(pulse, { toValue: 1, duration: 800, useNativeDriver: true }),
         ])
       ).start()
-
       searchTimer.current = setInterval(() => {
         setSearchSeconds(s => s + 1)
       }, 1000)
-
       setTimeout(() => {
         const driver = mockDrivers[Math.floor(Math.random() * mockDrivers.length)]
         setMatchedDriver(driver)
@@ -505,7 +500,7 @@ export default function HomeScreen({ navigation }) {
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Profile')}>
             <Ionicons name="person-outline" size={18} color={DARK} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => {}}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Notifications')}>
             <Ionicons name="notifications-outline" size={18} color={DARK} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => setMenuOpen(!menuOpen)}>
