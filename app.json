@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "VoltApp2",
+    "name": "VoltRide",
     "slug": "VoltApp2",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,8 +14,9 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "ca.voltride.app",
       "config": {
-        "googleMapsApiKey": "MAPS_KEY_REMOVED"
+        "googleMapsApiKey": "AIzaSyAfzKEAH1z7S3jHQizI8KDOLl6vVwwpK6M"
       }
     },
     "android": {
@@ -25,10 +26,11 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "MAPS_KEY_REMOVED"
+          "apiKey": "AIzaSyAfzKEAH1z7S3jHQizI8KDOLl6vVwwpK6M"
         }
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "ca.voltride.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
