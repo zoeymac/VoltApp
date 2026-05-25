@@ -113,7 +113,7 @@ export default function ProfileScreen({ navigation }) {
       section: 'More',
       items: [
         { icon: 'flash-outline', label: 'Charging Stations', screen: 'ChargingStations' },
-        { icon: 'person-add-outline', label: 'Become a Driver', screen: 'Driver' },
+        { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
         { icon: 'notifications-outline', label: 'Notifications', screen: 'Notifications' },
         { icon: 'shield-checkmark-outline', label: 'Safety', screen: null },
         { icon: 'help-circle-outline', label: 'Help & Support', screen: null },

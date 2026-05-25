@@ -16,6 +16,7 @@ import ProfileScreen from './screens/ProfileScreen'
 import RideHistoryScreen from './screens/RideHistoryScreen'
 import ChargingStationsScreen from './screens/ChargingStationsScreen'
 import NotificationsScreen from './screens/NotificationsScreen'
+import DriverApplicationScreen from './screens/DriverApplicationScreen'
 
 const Stack = createStackNavigator()
 
@@ -40,6 +41,7 @@ function AppStack() {
       <Stack.Screen name="RideHistory" component={RideHistoryScreen} />
       <Stack.Screen name="ChargingStations" component={ChargingStationsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen name="DriverApplication" component={DriverApplicationScreen} />
     </Stack.Navigator>
   )
 }

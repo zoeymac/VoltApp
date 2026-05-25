@@ -170,7 +170,7 @@ export default function HomeScreen({ navigation }) {
     { icon: 'time-outline', label: 'My Rides', screen: 'RideHistory' },
     { icon: 'car-outline', label: 'Rent EV', screen: null },
     { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
-    { icon: 'person-add-outline', label: 'Become a Driver', screen: 'Driver' },
+   { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
     { icon: 'calendar-outline', label: 'Scheduled Rides', screen: null },
   ]
 
