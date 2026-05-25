@@ -40,6 +40,7 @@ const darkMapStyle = [
 
 export default function HomeScreen({ navigation }) {
   const [pickup, setPickup] = useState('Current Location')
+  const [userName, setUserName] = useState('')
   const [destination, setDestination] = useState('')
   const [selectedVehicle, setSelectedVehicle] = useState('comfort')
   const [allowsPets, setAllowsPets] = useState(false)
@@ -77,29 +78,38 @@ export default function HomeScreen({ navigation }) {
   }, [])
 
   useEffect(() => {
-    getLocation()
-  }, [])
-
-  const getLocation = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync()
-      if (status !== 'granted') return
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced
-      })
-      const { latitude, longitude } = location.coords
-      setUserLocation({ latitude, longitude })
-      const geocode = await Location.reverseGeocodeAsync({ latitude, longitude })
-      if (geocode.length > 0) {
-        const addr = geocode[0]
-        const street = addr.street ? `${addr.streetNumber || ''} ${addr.street}`.trim() : ''
-        const city = addr.city || addr.subregion || ''
-        setPickup(street ? `${street}, ${city}` : city || 'Current Location')
+    const init = async () => {
+      // Get user name
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        const name = user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
+        setUserName(name)
+      } catch (err) {
+        console.log('User error:', err)
       }
-    } catch (err) {
-      console.log('Location error:', err)
+
+      // Get location
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync()
+        if (status !== 'granted') return
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced
+        })
+        const { latitude, longitude } = location.coords
+        setUserLocation({ latitude, longitude })
+        const geocode = await Location.reverseGeocodeAsync({ latitude, longitude })
+        if (geocode.length > 0) {
+          const addr = geocode[0]
+          const street = addr.street ? `${addr.streetNumber || ''} ${addr.street}`.trim() : ''
+          const city = addr.city || addr.subregion || ''
+          setPickup(street ? `${street}, ${city}` : city || 'Current Location')
+        }
+      } catch (err) {
+        console.log('Location error:', err)
+      }
     }
-  }
+    init()
+  }, [])
 
   useEffect(() => {
     if (step === 'searching') {
@@ -238,7 +248,9 @@ export default function HomeScreen({ navigation }) {
       return (
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.welcomeCard}>
-            <Text style={styles.welcomeTitle}>Welcome back!</Text>
+            <Text style={styles.welcomeTitle}>
+              {userName ? `Welcome back, ${userName.split(' ')[0]}!` : 'Welcome back!'}
+            </Text>
             <Text style={styles.welcomeSub}>Let's get you moving with zero emissions</Text>
           </View>
 

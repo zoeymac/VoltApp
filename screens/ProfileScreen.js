@@ -14,19 +14,41 @@ const DARK = '#1A1A1A'
 const BORDER = '#E8E8E8'
 const RED = '#ef4444'
 const HEADER_BG = '#FAEDCB'
+const API_URL = 'http://10.0.0.100:3000'
 
 export default function ProfileScreen({ navigation }) {
   const [user, setUser] = useState(null)
+  const [rideCount, setRideCount] = useState(0)
+  const [totalSpent, setTotalSpent] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getUser()
+    init()
   }, [])
 
-  const getUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
-    setLoading(false)
+  const init = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+
+      // Fetch real ride count for this user
+      const res = await fetch(`${API_URL}/rides`)
+      const rides = await res.json()
+      const userRides = rides.filter(r => r.rider_id === user?.id)
+      setRideCount(userRides.length)
+      const spent = userRides.reduce((sum, r) => sum + (r.base_price * r.surge_multiplier || 0), 0)
+      setTotalSpent(spent)
+    } catch (err) {
+      console.log('Profile error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getMemberSince = () => {
+    if (!user?.created_at) return '2026'
+    const date = new Date(user.created_at)
+    return date.toLocaleDateString('en-CA', { month: 'short', year: 'numeric' })
   }
 
   const logout = async () => {
@@ -57,12 +79,10 @@ export default function ProfileScreen({ navigation }) {
           style: 'destructive',
           onPress: async () => {
             try {
-              const { data: { user } } = await supabase.auth.getUser()
-              if (!user) return
               await supabase.auth.signOut()
               Alert.alert(
                 'Request Submitted',
-                'Your account deletion request has been submitted. Your account will be deleted within 30 days. You have been signed out.'
+                'Your account deletion request has been submitted. Your account will be deleted within 30 days.'
               )
             } catch (err) {
               Alert.alert('Error', 'Something went wrong. Please contact privacy@voltride.ca')
@@ -94,7 +114,7 @@ export default function ProfileScreen({ navigation }) {
       items: [
         { icon: 'flash-outline', label: 'Charging Stations', screen: 'ChargingStations' },
         { icon: 'person-add-outline', label: 'Become a Driver', screen: 'Driver' },
-        { icon: 'notifications-outline', label: 'Notifications', screen: null },
+        { icon: 'notifications-outline', label: 'Notifications', screen: 'Notifications' },
         { icon: 'shield-checkmark-outline', label: 'Safety', screen: null },
         { icon: 'help-circle-outline', label: 'Help & Support', screen: null },
         { icon: 'document-text-outline', label: 'Privacy Policy', screen: null },
@@ -109,7 +129,6 @@ export default function ProfileScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={22} color={DARK} />
@@ -121,7 +140,6 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* PROFILE CARD */}
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
@@ -136,18 +154,17 @@ export default function ProfileScreen({ navigation }) {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
-              <Text style={styles.statValue}>12</Text>
+              <Text style={styles.statValue}>{rideCount}</Text>
               <Text style={styles.statLabel}>Rides</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
-              <Text style={styles.statValue}>2026</Text>
+              <Text style={styles.statValue}>{getMemberSince()}</Text>
               <Text style={styles.statLabel}>Member Since</Text>
             </View>
           </View>
         </View>
 
-        {/* WALLET CARD */}
         <View style={styles.walletCard}>
           <View>
             <Text style={styles.walletLabel}>⚡ Volt Credits</Text>
@@ -158,7 +175,15 @@ export default function ProfileScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* MENU SECTIONS */}
+        {/* Total spent card */}
+        <View style={styles.spentCard}>
+          <Ionicons name="leaf-outline" size={20} color="#22c55e" />
+          <Text style={styles.spentText}>
+            You've taken <Text style={styles.spentBold}>{rideCount} rides</Text> and spent{' '}
+            <Text style={styles.spentBold}>${totalSpent.toFixed(2)}</Text> with VoltRide
+          </Text>
+        </View>
+
         {menuItems.map((section, si) => (
           <View key={si} style={styles.section}>
             <Text style={styles.sectionTitle}>{section.section}</Text>
@@ -180,13 +205,11 @@ export default function ProfileScreen({ navigation }) {
           </View>
         ))}
 
-        {/* SIGN OUT */}
         <TouchableOpacity style={styles.signOutBtn} onPress={logout}>
           <Ionicons name="log-out-outline" size={20} color={RED} />
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
-        {/* DELETE ACCOUNT - Apple requires this */}
         <TouchableOpacity style={styles.deleteBtn} onPress={deleteAccount}>
           <Text style={styles.deleteText}>Delete Account</Text>
         </TouchableOpacity>
@@ -240,7 +263,7 @@ const styles = StyleSheet.create({
 
   walletCard: {
     backgroundColor: CARD, marginHorizontal: 16,
-    marginBottom: 16, borderRadius: 16, padding: 20,
+    marginBottom: 12, borderRadius: 16, padding: 20,
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
@@ -254,6 +277,15 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: GOLD,
   },
   addCreditsBtnText: { color: GOLD, fontWeight: '600', fontSize: 13 },
+
+  spentCard: {
+    backgroundColor: '#F0FFF4', marginHorizontal: 16,
+    marginBottom: 16, borderRadius: 14, padding: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderWidth: 1, borderColor: '#BBF7D0',
+  },
+  spentText: { fontSize: 13, color: '#166534', flex: 1, lineHeight: 20 },
+  spentBold: { fontWeight: '700' },
 
   section: { marginHorizontal: 16, marginBottom: 16 },
   sectionTitle: {
