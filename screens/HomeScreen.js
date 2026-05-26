@@ -64,6 +64,7 @@ export default function HomeScreen({ navigation }) {
 
   const shimmer = useRef(new Animated.Value(0)).current
   const pulse = useRef(new Animated.Value(1)).current
+  const mapRef = useRef(null)
   const searchTimer = useRef(null)
   const etaTimer = useRef(null)
 
@@ -79,7 +80,6 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     const init = async () => {
-      // Get user name
       try {
         const { data: { user } } = await supabase.auth.getUser()
         const name = user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
@@ -88,7 +88,6 @@ export default function HomeScreen({ navigation }) {
         console.log('User error:', err)
       }
 
-      // Get location
       try {
         const { status } = await Location.requestForegroundPermissionsAsync()
         if (status !== 'granted') return
@@ -97,6 +96,17 @@ export default function HomeScreen({ navigation }) {
         })
         const { latitude, longitude } = location.coords
         setUserLocation({ latitude, longitude })
+
+        // Animate map to real location
+        if (mapRef.current) {
+          mapRef.current.animateToRegion({
+            latitude,
+            longitude,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }, 1000)
+        }
+
         const geocode = await Location.reverseGeocodeAsync({ latitude, longitude })
         if (geocode.length > 0) {
           const addr = geocode[0]
@@ -161,7 +171,7 @@ export default function HomeScreen({ navigation }) {
   ]
 
   const quickActions = [
-    { icon: 'time-outline', label: 'Schedule', screen: null },
+    { icon: 'time-outline', label: 'Schedule', screen: 'ScheduleRide' },
     { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
     { icon: 'car-outline', label: 'Rent EV', screen: null },
   ]
@@ -170,8 +180,8 @@ export default function HomeScreen({ navigation }) {
     { icon: 'time-outline', label: 'My Rides', screen: 'RideHistory' },
     { icon: 'car-outline', label: 'Rent EV', screen: null },
     { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
-   { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
-    { icon: 'calendar-outline', label: 'Scheduled Rides', screen: null },
+    { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
+    { icon: 'calendar-outline', label: 'Scheduled Rides', screen: 'ScheduleRide' },
   ]
 
   const getPrice = () => {
@@ -483,6 +493,7 @@ export default function HomeScreen({ navigation }) {
       <StatusBar barStyle="dark-content" />
 
       <MapView
+        ref={mapRef}
         style={styles.map}
         provider="google"
         initialRegion={{
