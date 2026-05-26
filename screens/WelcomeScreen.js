@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import {
   StyleSheet, Text, View, TouchableOpacity,
   Dimensions, Animated, StatusBar, Platform
@@ -77,7 +77,7 @@ export default function WelcomeScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* LOGO AT TOP */}
+      {/* LOGO */}
       <View style={styles.logoWrap}>
         <View style={styles.logoCircle}>
           <Text style={styles.logoEmoji}>⚡</Text>
@@ -111,10 +111,20 @@ export default function WelcomeScreen({ navigation }) {
       <View style={styles.buttonsWrap}>
         <TouchableOpacity style={styles.primaryBtn} onPress={next}>
           <Text style={styles.primaryBtnText}>
-            {isLast ? 'Get Started' : 'Next'}
+            {isLast ? 'Get Started as Rider' : 'Next'}
           </Text>
-          <Ionicons name={isLast ? 'flash' : 'arrow-forward'} size={18} color={DARK} />
+          <Ionicons name={isLast ? 'car-outline' : 'arrow-forward'} size={18} color={DARK} />
         </TouchableOpacity>
+
+        {isLast && (
+          <TouchableOpacity
+            style={styles.driverBtn}
+            onPress={() => navigation.navigate('Login', { mode: 'driver' })}
+          >
+            <Ionicons name="car-sport-outline" size={18} color={GOLD} />
+            <Text style={styles.driverBtnText}>Become a Driver</Text>
+          </TouchableOpacity>
+        )}
 
         {!isLast && (
           <TouchableOpacity
@@ -191,7 +201,7 @@ const styles = StyleSheet.create({
   },
   dotActive: { width: 24, backgroundColor: GOLD },
 
-  buttonsWrap: { width: '100%', gap: 12 },
+  buttonsWrap: { width: '100%', gap: 10 },
   primaryBtn: {
     backgroundColor: GOLD, borderRadius: 14,
     padding: 18, flexDirection: 'row',
@@ -201,9 +211,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
   },
   primaryBtnText: { fontSize: 17, fontWeight: '700', color: DARK },
+
+  driverBtn: {
+    backgroundColor: DARK, borderRadius: 14,
+    padding: 18, flexDirection: 'row',
+    alignItems: 'center', justifyContent: 'center',
+    gap: 8,
+  },
+  driverBtnText: { fontSize: 17, fontWeight: '700', color: GOLD },
+
   skipBtn: { alignItems: 'center', padding: 12 },
   skipBtnText: { fontSize: 15, color: MUTED, fontWeight: '500' },
-  loginBtn: { alignItems: 'center', padding: 12 },
+
+  loginBtn: { alignItems: 'center', padding: 8 },
   loginBtnText: { fontSize: 14, color: DARK, fontWeight: '600' },
 
   privacyNote: {

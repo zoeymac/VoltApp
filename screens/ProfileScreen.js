@@ -110,16 +110,17 @@ export default function ProfileScreen({ navigation }) {
       ]
     },
     {
-      section: 'More',
-      items: [
-        { icon: 'flash-outline', label: 'Charging Stations', screen: 'ChargingStations' },
-        { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
-        { icon: 'notifications-outline', label: 'Notifications', screen: 'Notifications' },
-        { icon: 'shield-checkmark-outline', label: 'Safety', screen: null },
-        { icon: 'help-circle-outline', label: 'Help & Support', screen: null },
-        { icon: 'document-text-outline', label: 'Privacy Policy', screen: null },
-      ]
-    }
+  section: 'More',
+  items: [
+    { icon: 'flash-outline', label: 'Charging Stations', screen: 'ChargingStations' },
+    { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
+    { icon: 'notifications-outline', label: 'Notifications', screen: 'Notifications' },
+    { icon: 'shield-checkmark-outline', label: 'Safety', screen: null },
+    { icon: 'help-circle-outline', label: 'Help & Support', screen: null },
+    { icon: 'document-text-outline', label: 'Privacy Policy', screen: 'PrivacyPolicy' },
+    { icon: 'reader-outline', label: 'Terms of Service', screen: 'TermsOfService' },
+  ]
+}
   ]
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Rider'

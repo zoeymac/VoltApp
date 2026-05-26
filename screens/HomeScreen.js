@@ -170,19 +170,19 @@ export default function HomeScreen({ navigation }) {
     { id: 'accessible', label: 'Access', icon: 'accessibility-outline', price: '$12', desc: 'Accessible' },
   ]
 
-  const quickActions = [
-    { icon: 'time-outline', label: 'Schedule', screen: 'ScheduleRide' },
-    { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
-    { icon: 'car-outline', label: 'Rent EV', screen: null },
-  ]
+ const quickActions = [
+  { icon: 'time-outline', label: 'Schedule', screen: 'ScheduleRide' },
+  { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
+  { icon: 'car-outline', label: 'Rent EV', screen: 'RentEV' },
+]
 
   const menuItems = [
-    { icon: 'time-outline', label: 'My Rides', screen: 'RideHistory' },
-    { icon: 'car-outline', label: 'Rent EV', screen: null },
-    { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
-    { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
-    { icon: 'calendar-outline', label: 'Scheduled Rides', screen: 'ScheduleRide' },
-  ]
+  { icon: 'time-outline', label: 'My Rides', screen: 'RideHistory' },
+  { icon: 'car-outline', label: 'Rent EV', screen: 'RentEV' },
+  { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
+  { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
+  { icon: 'calendar-outline', label: 'Scheduled Rides', screen: 'ScheduleRide' },
+]
 
   const getPrice = () => {
     const prices = { comfort: 12, premium: 18, xl: 22, accessible: 12 }

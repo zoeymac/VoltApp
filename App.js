@@ -18,6 +18,9 @@ import ChargingStationsScreen from './screens/ChargingStationsScreen'
 import NotificationsScreen from './screens/NotificationsScreen'
 import DriverApplicationScreen from './screens/DriverApplicationScreen'
 import ScheduleRideScreen from './screens/ScheduleRideScreen'
+import RentEVScreen from './screens/RentEVScreen'
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen'
+import TermsOfServiceScreen from './screens/TermsOfServiceScreen'
 
 const Stack = createStackNavigator()
 
@@ -28,6 +31,8 @@ function AuthStack() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
     </Stack.Navigator>
   )
 }
@@ -44,6 +49,9 @@ function AppStack() {
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="DriverApplication" component={DriverApplicationScreen} />
       <Stack.Screen name="ScheduleRide" component={ScheduleRideScreen} />
+      <Stack.Screen name="RentEV" component={RentEVScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
     </Stack.Navigator>
   )
 }
