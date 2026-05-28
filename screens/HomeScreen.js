@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import {
   StyleSheet, Text, View, TouchableOpacity,
   TextInput, ScrollView, Animated, Dimensions,
-  StatusBar, Platform, Modal
+  StatusBar, Platform, Modal, Share, Linking
 } from 'react-native'
 import MapView, { Marker } from 'react-native-maps'
 import { Ionicons } from '@expo/vector-icons'
 import * as Location from 'expo-location'
 import { supabase } from '../lib/supabase'
+import { notify } from '../lib/notifications'
 
 const { height, width } = Dimensions.get('window')
 
@@ -23,9 +24,9 @@ const RED = '#ef4444'
 const API_URL = 'http://10.0.0.100:3000'
 
 const mockDrivers = [
-  { name: 'Alex Chen', rating: 4.9, model: 'Tesla Model 3', plate: 'EV-2024', eta: 4 },
-  { name: 'Sarah Johnson', rating: 4.8, model: 'Polestar 2', plate: 'GREEN-1', eta: 6 },
-  { name: 'Marcus Lee', rating: 4.95, model: 'Tesla Model Y', plate: 'ZERO-EM', eta: 3 },
+  { name: 'Alex Chen', rating: 4.9, model: 'Tesla Model 3', plate: 'EV-2024', eta: 4, phone: '+14165550001' },
+  { name: 'Sarah Johnson', rating: 4.8, model: 'Polestar 2', plate: 'GREEN-1', eta: 6, phone: '+14165550002' },
+  { name: 'Marcus Lee', rating: 4.95, model: 'Tesla Model Y', plate: 'ZERO-EM', eta: 3, phone: '+14165550003' },
 ]
 
 const darkMapStyle = [
@@ -36,6 +37,20 @@ const darkMapStyle = [
   { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3d3d6b' }] },
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0d1b2a' }] },
   { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
+]
+
+const SUGGESTED_PLACES = [
+  { icon: 'home-outline', label: 'Home', address: '30 Denarda St, Toronto' },
+  { icon: 'briefcase-outline', label: 'Work', address: 'Downtown Toronto' },
+  { icon: 'train-outline', label: 'Union Station', address: '65 Front St W, Toronto' },
+  { icon: 'airplane-outline', label: 'Pearson Airport', address: '6301 Silver Dart Dr, Mississauga' },
+  { icon: 'business-outline', label: 'CN Tower', address: '290 Bremner Blvd, Toronto' },
+  { icon: 'storefront-outline', label: 'Yorkdale Mall', address: '3401 Dufferin St, Toronto' },
+]
+
+const RECENT_PLACES = [
+  { icon: 'time-outline', label: 'Union Station', address: '65 Front St W, Toronto' },
+  { icon: 'time-outline', label: 'Pearson Airport', address: '6301 Silver Dart Dr, Mississauga' },
 ]
 
 export default function HomeScreen({ navigation }) {
@@ -54,6 +69,7 @@ export default function HomeScreen({ navigation }) {
   const [eta, setEta] = useState(null)
   const [showCancel, setShowCancel] = useState(false)
   const [showRating, setShowRating] = useState(false)
+  const [showSafety, setShowSafety] = useState(false)
   const [rating, setRating] = useState(0)
   const [carbonSaved] = useState((Math.random() * 3 + 1).toFixed(1))
   const [searchSeconds, setSearchSeconds] = useState(0)
@@ -87,7 +103,6 @@ export default function HomeScreen({ navigation }) {
       } catch (err) {
         console.log('User error:', err)
       }
-
       try {
         const { status } = await Location.requestForegroundPermissionsAsync()
         if (status !== 'granted') return
@@ -96,17 +111,12 @@ export default function HomeScreen({ navigation }) {
         })
         const { latitude, longitude } = location.coords
         setUserLocation({ latitude, longitude })
-
-        // Animate map to real location
         if (mapRef.current) {
           mapRef.current.animateToRegion({
-            latitude,
-            longitude,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
+            latitude, longitude,
+            latitudeDelta: 0.05, longitudeDelta: 0.05,
           }, 1000)
         }
-
         const geocode = await Location.reverseGeocodeAsync({ latitude, longitude })
         if (geocode.length > 0) {
           const addr = geocode[0]
@@ -138,6 +148,7 @@ export default function HomeScreen({ navigation }) {
         setEta(driver.eta)
         setStep('matched')
         clearInterval(searchTimer.current)
+        notify.driverMatched(driver.name, driver.eta)
       }, 4000)
     }
     return () => clearInterval(searchTimer.current)
@@ -170,19 +181,19 @@ export default function HomeScreen({ navigation }) {
     { id: 'accessible', label: 'Access', icon: 'accessibility-outline', price: '$12', desc: 'Accessible' },
   ]
 
- const quickActions = [
-  { icon: 'time-outline', label: 'Schedule', screen: 'ScheduleRide' },
-  { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
-  { icon: 'car-outline', label: 'Rent EV', screen: 'RentEV' },
-]
+  const quickActions = [
+    { icon: 'calendar-outline', label: 'Schedule', screen: 'ScheduleRide' },
+    { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
+    { icon: 'car-sport-outline', label: 'Rent EV', screen: 'RentEV' },
+  ]
 
   const menuItems = [
-  { icon: 'time-outline', label: 'My Rides', screen: 'RideHistory' },
-  { icon: 'car-outline', label: 'Rent EV', screen: 'RentEV' },
-  { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
-  { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
-  { icon: 'calendar-outline', label: 'Scheduled Rides', screen: 'ScheduleRide' },
-]
+    { icon: 'time-outline', label: 'My Rides', screen: 'RideHistory' },
+    { icon: 'car-outline', label: 'Rent EV', screen: 'RentEV' },
+    { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
+    { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
+    { icon: 'calendar-outline', label: 'Scheduled Rides', screen: 'ScheduleRide' },
+  ]
 
   const getPrice = () => {
     const prices = { comfort: 12, premium: 18, xl: 22, accessible: 12 }
@@ -199,8 +210,7 @@ export default function HomeScreen({ navigation }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pickup: pickup,
-          dropoff: destination,
+          pickup, dropoff: destination,
           vehicle_type: selectedVehicle,
           base_price: getPrice(),
           surge_multiplier: 1.0,
@@ -228,6 +238,7 @@ export default function HomeScreen({ navigation }) {
   const completeRide = () => {
     setStep('complete')
     setShowRating(true)
+    notify.rideComplete(getPrice().toFixed(2))
   }
 
   const submitRating = (stars) => {
@@ -239,31 +250,60 @@ export default function HomeScreen({ navigation }) {
     setActiveRide(null)
   }
 
+  const shareTrip = () => {
+    Share.share({
+      message: `I'm taking a VoltRide!\nDriver: ${matchedDriver?.name}\nVehicle: ${matchedDriver?.model} (${matchedDriver?.plate})\nFrom: ${pickup}\nTo: ${destination}`,
+      title: 'Share my VoltRide trip',
+    })
+  }
+
   const renderSheet = () => {
     if (loading) {
       return (
-        <>
-          <Animated.View style={[styles.skeletonCard, { opacity: skeletonOpacity }]} />
+        <View style={styles.skeletonWrap}>
+          <Animated.View style={[styles.skeletonSearch, { opacity: skeletonOpacity }]} />
           <View style={styles.quickRow}>
             {[1, 2, 3].map(i => (
               <Animated.View key={i} style={[styles.skeletonAction, { opacity: skeletonOpacity }]} />
             ))}
           </View>
-          <Animated.View style={[styles.skeletonInput, { opacity: skeletonOpacity }]} />
-        </>
+          <Animated.View style={[styles.skeletonCard, { opacity: skeletonOpacity }]} />
+          <Animated.View style={[styles.skeletonCard, { opacity: skeletonOpacity, marginTop: 8 }]} />
+        </View>
       )
     }
 
     if (step === 'booking') {
       return (
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.welcomeCard}>
-            <Text style={styles.welcomeTitle}>
-              {userName ? `Welcome back, ${userName.split(' ')[0]}!` : 'Welcome back!'}
-            </Text>
-            <Text style={styles.welcomeSub}>Let's get you moving with zero emissions</Text>
+          <Text style={styles.greetingText}>
+            {userName ? `Good day, ${userName.split(' ')[0]}` : 'Good day'}
+          </Text>
+
+          {/* SEARCH BAR */}
+          <View style={styles.searchBar}>
+            <View style={styles.searchBarInner}>
+              <View style={styles.searchDots}>
+                <View style={styles.dotGoldSm} />
+                <View style={styles.searchLine} />
+                <View style={styles.dotDarkSm} />
+              </View>
+              <View style={styles.searchFields}>
+                <Text style={styles.searchPickup} numberOfLines={1}>{pickup}</Text>
+                <View style={styles.searchDivider} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Where to?"
+                  placeholderTextColor={MUTED}
+                  value={destination}
+                  onChangeText={setDestination}
+                />
+              </View>
+              <Ionicons name="navigate-circle" size={36} color={GOLD} />
+            </View>
           </View>
 
+          {/* QUICK ACTIONS */}
           <View style={styles.quickRow}>
             {quickActions.map((a, i) => (
               <TouchableOpacity
@@ -271,34 +311,15 @@ export default function HomeScreen({ navigation }) {
                 style={styles.quickAction}
                 onPress={() => a.screen && navigation.navigate(a.screen)}
               >
-                <Ionicons name={a.icon} size={26} color={DARK} style={{ marginBottom: 6 }} />
+                <View style={styles.quickIconWrap}>
+                  <Ionicons name={a.icon} size={22} color={DARK} />
+                </View>
                 <Text style={styles.quickLabel}>{a.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <View style={styles.locationCard}>
-            <View style={styles.locationRow}>
-              <View style={styles.dotGold} />
-              <Text style={styles.locationText} numberOfLines={1}>{pickup}</Text>
-              <Ionicons name="navigate-outline" size={18} color={GOLD} />
-            </View>
-            <View style={{ paddingLeft: 5 }}>
-              <View style={styles.locationDivider} />
-            </View>
-            <View style={styles.locationRow}>
-              <View style={styles.dotDark} />
-              <TextInput
-                style={styles.locationInput}
-                placeholder="Where to?"
-                placeholderTextColor={MUTED}
-                value={destination}
-                onChangeText={setDestination}
-              />
-            </View>
-          </View>
-
-          {destination.length > 0 && (
+          {destination.length > 0 ? (
             <>
               <Text style={styles.sectionTitle}>Select ride type</Text>
               <View style={styles.vehicleGrid}>
@@ -327,13 +348,15 @@ export default function HomeScreen({ navigation }) {
                   style={[styles.extraBtn, allowsPets && styles.extraBtnActive]}
                   onPress={() => setAllowsPets(!allowsPets)}
                 >
-                  <Text style={styles.extraBtnText}>🐾 Pets</Text>
+                  <Ionicons name="paw-outline" size={14} color={allowsPets ? GOLD : DARK} />
+                  <Text style={styles.extraBtnText}>Pets</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.extraBtn}
                   onPress={() => setShowPromo(!showPromo)}
                 >
-                  <Text style={styles.extraBtnText}>🏷️ Promo</Text>
+                  <Ionicons name="pricetag-outline" size={14} color={DARK} />
+                  <Text style={styles.extraBtnText}>Promo</Text>
                 </TouchableOpacity>
               </View>
 
@@ -359,7 +382,10 @@ export default function HomeScreen({ navigation }) {
                   <Text style={styles.priceValue}>${getPrice().toFixed(2)}</Text>
                 </View>
                 <View style={styles.priceRow}>
-                  <Text style={styles.priceLabel}>🌱 Carbon saved</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Ionicons name="leaf-outline" size={14} color={GREEN} />
+                    <Text style={styles.priceLabel}>Carbon saved</Text>
+                  </View>
                   <Text style={[styles.priceValue, { color: GREEN }]}>{carbonSaved} kg CO₂</Text>
                 </View>
                 <View style={[styles.priceRow, { borderTopWidth: 1, borderTopColor: BORDER, marginTop: 8, paddingTop: 8 }]}>
@@ -369,8 +395,53 @@ export default function HomeScreen({ navigation }) {
               </View>
 
               <TouchableOpacity style={styles.requestBtn} onPress={requestRide}>
-                <Text style={styles.requestBtnText}>Request Ride ⚡</Text>
+                <Ionicons name="flash" size={20} color={GOLD} />
+                <Text style={styles.requestBtnText}>Request Ride</Text>
               </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {/* RECENT */}
+              <View style={styles.placesSection}>
+                <Text style={styles.placesSectionTitle}>Recent</Text>
+                {RECENT_PLACES.map((place, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={styles.placeRow}
+                    onPress={() => setDestination(place.address)}
+                  >
+                    <View style={styles.placeIconWrap}>
+                      <Ionicons name="time-outline" size={18} color={MUTED} />
+                    </View>
+                    <View style={styles.placeInfo}>
+                      <Text style={styles.placeLabel}>{place.label}</Text>
+                      <Text style={styles.placeAddress} numberOfLines={1}>{place.address}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={MUTED} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* SUGGESTED */}
+              <View style={styles.placesSection}>
+                <Text style={styles.placesSectionTitle}>Popular in Toronto</Text>
+                {SUGGESTED_PLACES.map((place, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={styles.placeRow}
+                    onPress={() => setDestination(place.address)}
+                  >
+                    <View style={[styles.placeIconWrap, { backgroundColor: '#FFF8E7' }]}>
+                      <Ionicons name={place.icon} size={18} color={GOLD} />
+                    </View>
+                    <View style={styles.placeInfo}>
+                      <Text style={styles.placeLabel}>{place.label}</Text>
+                      <Text style={styles.placeAddress} numberOfLines={1}>{place.address}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={MUTED} />
+                  </TouchableOpacity>
+                ))}
+              </View>
             </>
           )}
         </ScrollView>
@@ -382,7 +453,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.centerContent}>
           <Animated.View style={[styles.pulseCircle, { transform: [{ scale: pulse }] }]} />
           <View style={styles.pulseInner}>
-            <Text style={styles.pulseEmoji}>⚡</Text>
+            <Ionicons name="flash" size={36} color={DARK} />
           </View>
           <Text style={styles.searchingTitle}>Finding your driver...</Text>
           <Text style={styles.searchingDesc}>Looking for nearby EVs</Text>
@@ -399,7 +470,7 @@ export default function HomeScreen({ navigation }) {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={[styles.statusBanner, { backgroundColor: step === 'arriving' ? '#FFF3E0' : '#F0FFF4' }]}>
             <Text style={styles.statusBannerText}>
-              {step === 'arriving' ? '🚗 Driver is arriving!' : `⚡ Driver matched — ${eta} min away`}
+              {step === 'arriving' ? 'Driver is arriving!' : `Driver matched — ${eta} min away`}
             </Text>
           </View>
 
@@ -423,32 +494,44 @@ export default function HomeScreen({ navigation }) {
 
           <View style={styles.tripDetails}>
             <View style={styles.tripRow}>
-              <View style={styles.dotGold} />
+              <View style={styles.dotGoldSm} />
               <Text style={styles.tripText}>{pickup}</Text>
             </View>
             <View style={{ paddingLeft: 5, marginVertical: 2 }}>
               <View style={styles.locationDivider} />
             </View>
             <View style={styles.tripRow}>
-              <View style={styles.dotDark} />
+              <View style={styles.dotDarkSm} />
               <Text style={styles.tripText}>{destination}</Text>
             </View>
           </View>
 
           <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.actionBtn}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => Linking.openURL(`sms:${matchedDriver?.phone || '+14165550000'}`)}
+            >
               <Ionicons name="chatbubble-outline" size={20} color={DARK} />
               <Text style={styles.actionBtnText}>Message</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => Linking.openURL(`tel:${matchedDriver?.phone || '+14165550000'}`)}
+            >
               <Ionicons name="call-outline" size={20} color={DARK} />
               <Text style={styles.actionBtnText}>Call</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => setShowSafety(true)}
+            >
               <Ionicons name="shield-checkmark-outline" size={20} color={DARK} />
               <Text style={styles.actionBtnText}>Safety</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={shareTrip}
+            >
               <Ionicons name="share-outline" size={20} color={DARK} />
               <Text style={styles.actionBtnText}>Share</Text>
             </TouchableOpacity>
@@ -476,9 +559,14 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.searchingTitle}>Ride in progress</Text>
           <Text style={styles.searchingDesc}>{destination}</Text>
           <View style={styles.carbonBadge}>
-            <Text style={styles.carbonText}>🌱 Saving {carbonSaved} kg CO₂</Text>
+            <Ionicons name="leaf-outline" size={14} color={GREEN} />
+            <Text style={styles.carbonText}>Saving {carbonSaved} kg CO₂</Text>
           </View>
-          <TouchableOpacity style={styles.requestBtn} onPress={completeRide}>
+          <TouchableOpacity style={styles.actionBtn} onPress={shareTrip}>
+            <Ionicons name="share-outline" size={20} color={DARK} />
+            <Text style={styles.actionBtnText}>Share trip</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.requestBtn, { marginTop: 16 }]} onPress={completeRide}>
             <Text style={styles.requestBtnText}>Complete Ride</Text>
           </TouchableOpacity>
         </View>
@@ -513,7 +601,7 @@ export default function HomeScreen({ navigation }) {
 
       <View style={styles.topBar}>
         <View style={styles.logoContainer}>
-          <Text style={styles.logoIcon}>⚡</Text>
+          <Ionicons name="flash" size={18} color={GOLD} style={{ marginRight: 4 }} />
           <Text style={styles.logoText}>VoltRide</Text>
         </View>
         <View style={styles.topIcons}>
@@ -561,14 +649,13 @@ export default function HomeScreen({ navigation }) {
         {renderSheet()}
       </View>
 
+      {/* CANCEL MODAL */}
       <Modal visible={showCancel} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Cancel ride?</Text>
             <Text style={styles.modalDesc}>
-              {step === 'searching'
-                ? 'No fee to cancel now.'
-                : 'A cancellation fee of $3-8 may apply.'}
+              {step === 'searching' ? 'No fee to cancel now.' : 'A cancellation fee of $3-8 may apply.'}
             </Text>
             <TouchableOpacity style={styles.modalCancelBtn} onPress={cancelRide}>
               <Text style={styles.modalCancelText}>Yes, cancel</Text>
@@ -580,6 +667,7 @@ export default function HomeScreen({ navigation }) {
         </View>
       </Modal>
 
+      {/* RATING MODAL */}
       <Modal visible={showRating} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -597,7 +685,8 @@ export default function HomeScreen({ navigation }) {
               ))}
             </View>
             <View style={styles.carbonBadge}>
-              <Text style={styles.carbonText}>🌱 You saved {carbonSaved} kg CO₂!</Text>
+              <Ionicons name="leaf-outline" size={14} color={GREEN} />
+              <Text style={styles.carbonText}>You saved {carbonSaved} kg CO₂!</Text>
             </View>
             <TouchableOpacity style={styles.modalKeepBtn} onPress={() => submitRating(0)}>
               <Text style={styles.modalKeepText}>Skip</Text>
@@ -605,6 +694,57 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
       </Modal>
+
+      {/* SAFETY MODAL */}
+      <Modal visible={showSafety} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <Ionicons name="shield-checkmark" size={24} color={GOLD} />
+              <Text style={styles.modalTitle}>Safety Center</Text>
+            </View>
+            <Text style={styles.modalDesc}>
+              Your safety is our priority. Use these options if you feel unsafe.
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalCancelBtn, { backgroundColor: RED, marginBottom: 10 }]}
+              onPress={() => { setShowSafety(false); Linking.openURL('tel:911') }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="call" size={18} color={CARD} />
+                <Text style={styles.modalCancelText}>Call 911</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalCancelBtn, { backgroundColor: '#3b82f6', marginBottom: 10 }]}
+              onPress={() => {
+                setShowSafety(false)
+                Share.share({
+                  message: `SAFETY ALERT: I am in a VoltRide.\nDriver: ${matchedDriver?.name}\nVehicle: ${matchedDriver?.model}\nPlate: ${matchedDriver?.plate}\nFrom: ${pickup}\nTo: ${destination}`,
+                })
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="location" size={18} color={CARD} />
+                <Text style={styles.modalCancelText}>Share My Location</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalCancelBtn, { backgroundColor: DARK, marginBottom: 10 }]}
+              onPress={() => { setShowSafety(false); Linking.openURL('tel:+14165550911') }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="headset" size={18} color={GOLD} />
+                <Text style={[styles.modalCancelText, { color: GOLD }]}>VoltRide Safety Line</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalKeepBtn} onPress={() => setShowSafety(false)}>
+              <Text style={styles.modalKeepText}>I'm safe, close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   )
 }
@@ -629,7 +769,6 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1, shadowRadius: 8, elevation: 4,
   },
-  logoIcon: { fontSize: 18, marginRight: 6 },
   logoText: { fontWeight: '700', fontSize: 16, color: DARK },
   topIcons: { flexDirection: 'row', gap: 8 },
   iconBtn: {
@@ -675,36 +814,65 @@ const styles = StyleSheet.create({
     borderRadius: 2, alignSelf: 'center', marginBottom: 16,
   },
 
-  welcomeCard: {
-    backgroundColor: '#FFF8E7', borderRadius: 14,
-    padding: 16, marginBottom: 14,
-    borderWidth: 1, borderColor: '#F0E4B8',
-    alignItems: 'center',
+  greetingText: {
+    fontSize: 22, fontWeight: '800', color: DARK, marginBottom: 14,
   },
-  welcomeTitle: { fontSize: 18, fontWeight: '700', color: DARK, marginBottom: 4, textAlign: 'center' },
-  welcomeSub: { fontSize: 13, color: MUTED, textAlign: 'center' },
 
-  quickRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  searchBar: {
+    backgroundColor: CARD, borderRadius: 18,
+    marginBottom: 16,
+    borderWidth: 1.5, borderColor: BORDER,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08, shadowRadius: 12, elevation: 6,
+  },
+  searchBarInner: {
+    flexDirection: 'row', alignItems: 'center',
+    padding: 18, gap: 14,
+  },
+  searchDots: { alignItems: 'center', gap: 2 },
+  dotGoldSm: { width: 12, height: 12, borderRadius: 6, backgroundColor: GOLD },
+  dotDarkSm: { width: 12, height: 12, borderRadius: 6, backgroundColor: DARK },
+  searchLine: { width: 2, height: 22, backgroundColor: BORDER },
+  searchFields: { flex: 1 },
+  searchPickup: { fontSize: 14, color: MUTED, marginBottom: 8 },
+  searchDivider: { height: 1, backgroundColor: BORDER, marginBottom: 8 },
+  searchInput: { fontSize: 17, color: DARK, fontWeight: '600' },
+
+  quickRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   quickAction: {
     flex: 1, backgroundColor: CARD, borderRadius: 14,
-    padding: 14, alignItems: 'center',
+    padding: 12, alignItems: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+  },
+  quickIconWrap: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 6,
   },
   quickLabel: { fontSize: 12, fontWeight: '600', color: DARK },
 
-  locationCard: {
-    backgroundColor: CARD, borderRadius: 14,
-    padding: 16, marginBottom: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+  placesSection: { marginBottom: 16 },
+  placesSectionTitle: {
+    fontSize: 13, fontWeight: '700', color: MUTED,
+    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8,
   },
-  locationRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6 },
-  dotGold: { width: 12, height: 12, borderRadius: 6, backgroundColor: GOLD, marginRight: 12 },
-  dotDark: { width: 12, height: 12, borderRadius: 6, backgroundColor: DARK, marginRight: 12 },
-  locationDivider: { width: 2, height: 16, backgroundColor: '#DDD', marginVertical: 2 },
-  locationText: { flex: 1, fontSize: 15, color: DARK, fontWeight: '500' },
-  locationInput: { flex: 1, fontSize: 15, color: DARK },
+  placeRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: CARD, borderRadius: 12,
+    padding: 12, marginBottom: 8, gap: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+  },
+  placeIconWrap: {
+    width: 38, height: 38, borderRadius: 10,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  placeInfo: { flex: 1 },
+  placeLabel: { fontSize: 14, fontWeight: '600', color: DARK },
+  placeAddress: { fontSize: 12, color: MUTED, marginTop: 2 },
 
   sectionTitle: { fontSize: 16, fontWeight: '700', color: DARK, marginBottom: 10 },
   vehicleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
@@ -724,6 +892,7 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: CARD, borderRadius: 10,
     padding: 10, alignItems: 'center',
     borderWidth: 1, borderColor: BORDER,
+    flexDirection: 'row', justifyContent: 'center', gap: 6,
   },
   extraBtnActive: { borderColor: GOLD, backgroundColor: '#FFFBF0' },
   extraBtnText: { fontSize: 13, fontWeight: '600', color: DARK },
@@ -745,13 +914,17 @@ const styles = StyleSheet.create({
     padding: 16, marginBottom: 14,
     borderWidth: 1, borderColor: BORDER,
   },
-  priceRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  priceRow: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    marginBottom: 4, alignItems: 'center',
+  },
   priceLabel: { fontSize: 14, color: MUTED },
   priceValue: { fontSize: 14, color: DARK, fontWeight: '600' },
 
   requestBtn: {
     backgroundColor: DARK, borderRadius: 14,
     padding: 18, alignItems: 'center', marginBottom: 20,
+    flexDirection: 'row', justifyContent: 'center', gap: 8,
   },
   requestBtnText: { color: GOLD, fontWeight: '700', fontSize: 16 },
 
@@ -767,7 +940,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 24,
   },
-  pulseEmoji: { fontSize: 36 },
   searchingTitle: { fontSize: 20, fontWeight: '700', color: DARK, marginBottom: 8 },
   searchingDesc: { fontSize: 14, color: MUTED, marginBottom: 8 },
   searchTimer: { fontSize: 13, color: MUTED, marginBottom: 24 },
@@ -809,8 +981,9 @@ const styles = StyleSheet.create({
     backgroundColor: CARD, borderRadius: 14,
     padding: 16, marginBottom: 14,
   },
-  tripRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4 },
+  tripRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, gap: 10 },
   tripText: { fontSize: 14, color: DARK, flex: 1 },
+  locationDivider: { width: 2, height: 16, backgroundColor: '#DDD', marginVertical: 2 },
 
   actionRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   actionBtn: {
@@ -829,6 +1002,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', marginBottom: 20,
   },
   carbonBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: '#F0FFF4', borderRadius: 20,
     paddingHorizontal: 16, paddingVertical: 8,
     marginVertical: 16,
@@ -866,12 +1040,12 @@ const styles = StyleSheet.create({
   },
   userMarkerDot: {
     width: 12, height: 12, borderRadius: 6,
-    backgroundColor: GOLD,
-    borderWidth: 2, borderColor: CARD,
+    backgroundColor: GOLD, borderWidth: 2, borderColor: CARD,
   },
 
-  skeletonCard: { height: 70, backgroundColor: '#E8E8E8', borderRadius: 14, marginBottom: 14 },
-  skeletonAction: { flex: 1, height: 72, backgroundColor: '#E8E8E8', borderRadius: 14 },
-  skeletonInput: { height: 84, backgroundColor: '#E8E8E8', borderRadius: 14, marginTop: 14 },
+  skeletonWrap: { gap: 12 },
+  skeletonSearch: { height: 90, backgroundColor: '#E8E8E8', borderRadius: 18 },
+  skeletonAction: { flex: 1, height: 80, backgroundColor: '#E8E8E8', borderRadius: 14 },
+  skeletonCard: { height: 60, backgroundColor: '#E8E8E8', borderRadius: 12 },
 })
 
