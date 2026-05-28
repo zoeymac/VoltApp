@@ -183,14 +183,14 @@ export default function HomeScreen({ navigation }) {
 
   const quickActions = [
     { icon: 'calendar-outline', label: 'Schedule', screen: 'ScheduleRide' },
-    { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
+    { icon: 'bicycle-outline', label: 'Rent Bike', screen: 'RentBike' },
     { icon: 'car-sport-outline', label: 'Rent EV', screen: 'RentEV' },
   ]
 
   const menuItems = [
     { icon: 'time-outline', label: 'My Rides', screen: 'RideHistory' },
     { icon: 'car-outline', label: 'Rent EV', screen: 'RentEV' },
-    { icon: 'bicycle-outline', label: 'Rent Bike', screen: null },
+    { icon: 'bicycle-outline', label: 'Rent Bike', screen: 'RentBike' },
     { icon: 'person-add-outline', label: 'Become a Driver', screen: 'DriverApplication' },
     { icon: 'calendar-outline', label: 'Scheduled Rides', screen: 'ScheduleRide' },
   ]
@@ -280,7 +280,6 @@ export default function HomeScreen({ navigation }) {
             {userName ? `Good day, ${userName.split(' ')[0]}` : 'Good day'}
           </Text>
 
-          {/* SEARCH BAR */}
           <View style={styles.searchBar}>
             <View style={styles.searchBarInner}>
               <View style={styles.searchDots}>
@@ -303,7 +302,6 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
 
-          {/* QUICK ACTIONS */}
           <View style={styles.quickRow}>
             {quickActions.map((a, i) => (
               <TouchableOpacity
@@ -401,7 +399,6 @@ export default function HomeScreen({ navigation }) {
             </>
           ) : (
             <>
-              {/* RECENT */}
               <View style={styles.placesSection}>
                 <Text style={styles.placesSectionTitle}>Recent</Text>
                 {RECENT_PLACES.map((place, i) => (
@@ -422,7 +419,6 @@ export default function HomeScreen({ navigation }) {
                 ))}
               </View>
 
-              {/* SUGGESTED */}
               <View style={styles.placesSection}>
                 <Text style={styles.placesSectionTitle}>Popular in Toronto</Text>
                 {SUGGESTED_PLACES.map((place, i) => (
@@ -649,7 +645,6 @@ export default function HomeScreen({ navigation }) {
         {renderSheet()}
       </View>
 
-      {/* CANCEL MODAL */}
       <Modal visible={showCancel} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -667,7 +662,6 @@ export default function HomeScreen({ navigation }) {
         </View>
       </Modal>
 
-      {/* RATING MODAL */}
       <Modal visible={showRating} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -695,7 +689,6 @@ export default function HomeScreen({ navigation }) {
         </View>
       </Modal>
 
-      {/* SAFETY MODAL */}
       <Modal visible={showSafety} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -744,7 +737,6 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
       </Modal>
-
     </View>
   )
 }

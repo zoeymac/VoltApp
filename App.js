@@ -19,6 +19,7 @@ import NotificationsScreen from './screens/NotificationsScreen'
 import DriverApplicationScreen from './screens/DriverApplicationScreen'
 import ScheduleRideScreen from './screens/ScheduleRideScreen'
 import RentEVScreen from './screens/RentEVScreen'
+import RentBikeScreen from './screens/RentBikeScreen'
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen'
 import TermsOfServiceScreen from './screens/TermsOfServiceScreen'
 
@@ -50,6 +51,7 @@ function AppStack() {
       <Stack.Screen name="DriverApplication" component={DriverApplicationScreen} />
       <Stack.Screen name="ScheduleRide" component={ScheduleRideScreen} />
       <Stack.Screen name="RentEV" component={RentEVScreen} />
+      <Stack.Screen name="RentBike" component={RentBikeScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
     </Stack.Navigator>
