@@ -13,17 +13,20 @@
       "backgroundColor": "#FDFAF3"
     },
     "ios": {
-  "supportsTablet": true,
-  "bundleIdentifier": "ca.voltride.app",
-  "config": {
-    "googleMapsApiKey": "AIzaSyAfzKEAH1z7S3jHQizI8KDOLl6vVwwpK6M"
-  },
-  "infoPlist": {
-    "NSLocationWhenInUseUsageDescription": "VoltRide needs your location to find nearby drivers and show your position on the map.",
-    "NSLocationAlwaysUsageDescription": "VoltRide uses your location to match you with drivers.",
-    "UIBackgroundModes": ["location", "fetch"]
-  }
-},
+      "supportsTablet": true,
+      "bundleIdentifier": "ca.voltride.app",
+      "config": {
+        "googleMapsApiKey": "AIzaSyAfzKEAH1z7S3jHQizI8KDOLl6vVwwpK6M"
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "VoltRide needs your location to find nearby drivers and show your position on the map.",
+        "NSLocationAlwaysUsageDescription": "VoltRide uses your location to match you with drivers.",
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
+      }
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -41,7 +44,15 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.ca.voltride.app",
+          "enableGooglePay": false
+        }
+      ]
     ]
   }
 }
+
